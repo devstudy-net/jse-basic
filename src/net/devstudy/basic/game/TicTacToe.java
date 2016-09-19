@@ -12,7 +12,14 @@ public class TicTacToe {
 	public static char EMPTY = ' ';
 	public static char HUMAN = 'X';
 	public static char COMPUTER = 'O';
-	public static char[][] gameTable = { { EMPTY, EMPTY, EMPTY }, { EMPTY, EMPTY, EMPTY }, { EMPTY, EMPTY, EMPTY } };
+	
+	//public static boolean isHuman = true;
+	
+	public static char[][] gameTable = { 
+			{ EMPTY, EMPTY, EMPTY }, 
+			{ EMPTY, EMPTY, EMPTY }, 
+			{ EMPTY, EMPTY, EMPTY } 
+	};
 
 	public static void main(String[] args) {
 		System.out.println("A new game started!");
@@ -48,9 +55,31 @@ public class TicTacToe {
 		System.out.println();
 	}
 
-	public static boolean handleHumanTurn(int number) { // set X, check winner,
-														// check draw
+	public static boolean handleHumanTurn(int number) { // set X, check winner, check draw
+		makeTurn(number, /*isHuman ? */HUMAN/* : COMPUTER*/);
+		//isHuman = !isHuman; 
+		char winner = getWinner();
+		if(winner != NO_WINNER) {
+			if(winner == HUMAN) {
+				System.out.println("Game over: You win!");
+			} else {
+				System.out.println("Game over: Computer wins!");
+			}
+			printGameTable();
+			return false;
+		}
+		if (isDraw()) {
+			System.out.println("Game over: Draw!");
+			printGameTable();
+			return false;
+		}
 		return true;
+	}
+	
+	public static void makeTurn(int number, char ch) {
+		int i = (number - 1) / 3;
+		int j = number - i * 3 - 1;
+		gameTable[i][j] = ch;
 	}
 
 	public static char getWinner() {
@@ -78,17 +107,33 @@ public class TicTacToe {
 	}
 
 	public static boolean isCellFree(int number) {
-		return false;
+		int i = (number - 1) / 3;
+		int j = number - i * 3 - 1;
+		return gameTable[i][j] == EMPTY;
 	}
 
+	@SuppressWarnings("resource")
 	public static int readHumanTurn() {
-		// validate + check free
-		new Scanner(System.in).nextInt();
-		return 1;
+		while (true) {
+			int number = new Scanner(System.in).nextInt();
+			if (number < 1 || number > 9) {
+				System.out.println("Number should be between 1 and 9");
+			} else if (isCellFree(number)) {
+				return number;
+			} else {
+				System.out.println("Cell is not free! Type other number");
+			}
+		}
 	}
 
 	public static boolean isDraw() {
-		return false;
+		for (int i = 0; i < 3; i++) {
+			for (int j = 0; j < 3; j++) {
+				if (gameTable[i][j] == EMPTY) {
+					return false;
+				}
+			}
+		}
+		return true;
 	}
-
 }
