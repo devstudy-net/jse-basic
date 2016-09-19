@@ -15,13 +15,19 @@ public class DigitSum {
 	}
 
 	public static int recursive(int number) {
-		//TODO
-		return 0;
+		if (number < 10) {
+			return number;
+		} else {
+			return number % 10 + recursive(number / 10);
+		}
 	}
 
 	public static int iterative(int number) {
-		//TODO
-		return 0;
+		int sum = 0;
+		while(number > 0) {
+			sum += number % 10;
+			number = number / 10;
+		}
+		return sum;
 	}
-
 }
