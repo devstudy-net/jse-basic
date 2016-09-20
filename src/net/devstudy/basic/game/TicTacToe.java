@@ -1,5 +1,6 @@
 package net.devstudy.basic.game;
 
+import java.util.Random;
 import java.util.Scanner;
 
 /**
@@ -12,12 +13,10 @@ public class TicTacToe {
 	public static char EMPTY = ' ';
 	public static char HUMAN = 'X';
 	public static char COMPUTER = 'O';
-
-	// public static boolean isHuman = true;
-
 	public static char[][] gameTable = { { EMPTY, EMPTY, EMPTY }, { EMPTY, EMPTY, EMPTY }, { EMPTY, EMPTY, EMPTY } };
 
 	public static void main(String[] args) {
+		startGame();
 		System.out.println("A new game started!");
 		while (true) {
 			printGameTable();
@@ -26,6 +25,12 @@ public class TicTacToe {
 			if (!handleHumanTurn(number)) {
 				break;
 			}
+		}
+	}
+
+	public static void startGame() {
+		if (new Random().nextBoolean()) {
+			makeComputerTurn();
 		}
 	}
 
@@ -51,17 +56,10 @@ public class TicTacToe {
 		System.out.println();
 	}
 
-	public static boolean handleHumanTurn(int number) { // set X, check winner,
-														// check draw
-		makeTurn(number, /* isHuman ? */HUMAN/* : COMPUTER */);
-		// isHuman = !isHuman;
-		char winner = getWinner();
-		if (winner != NO_WINNER) {
-			if (winner == HUMAN) {
-				System.out.println("Game over: You win!");
-			} else {
-				System.out.println("Game over: Computer wins!");
-			}
+	public static boolean handleHumanTurn(int number) {
+		makeTurn(number, HUMAN);
+		if (getWinner() == HUMAN) {
+			System.out.println("Game over: You win!");
 			printGameTable();
 			return false;
 		}
@@ -70,8 +68,17 @@ public class TicTacToe {
 			printGameTable();
 			return false;
 		}
-		//TODO
-		
+		makeComputerTurn();
+		if (getWinner() == COMPUTER) {
+			System.out.println("Game over: Computer wins!");
+			printGameTable();
+			return false;
+		}
+		if (isDraw()) {
+			System.out.println("Game over: Draw!");
+			printGameTable();
+			return false;
+		}
 		return true;
 	}
 
@@ -137,5 +144,171 @@ public class TicTacToe {
 			}
 		}
 		return true;
+	}
+
+	public static void makeComputerTurn() {
+		if (tryWin(COMPUTER)) {
+			return;
+		}
+		if (tryWin(HUMAN)) {
+			return;
+		}
+		if (tryWinOnNextTurn()) {
+			return;
+		}
+		makeRandomComputerTurn();
+	}
+
+	public static boolean tryWin(char ch) {
+		for (int i = 0; i < 3; i++) {
+			if (trySetToRow(i, ch)) {
+				return true;
+			}
+		}
+		for (int i = 0; i < 3; i++) {
+			if (trySetToCol(i, ch)) {
+				return true;
+			}
+		}
+		if (trySetToNotMainDiagonal(ch)) {
+			return true;
+		}
+		if (trySetToMainDiagonal(ch)) {
+			return true;
+		}
+		return false;
+	}
+
+	public static void makeRandomComputerTurn() {
+		int[] freeCells = new int[9];
+		int count = 0;
+		for (int i = 0; i < 3; i++) {
+			for (int j = 0; j < 3; j++) {
+				if (gameTable[i][j] == EMPTY) {
+					freeCells[count++] = i * 3 + j + 1;
+				}
+			}
+		}
+		int index = new Random().nextInt(count);
+		makeTurn(freeCells[index], COMPUTER);
+	}
+
+	public static boolean trySetToRow(int row, char ch) {
+		int res = 0;
+		int emptyI = -1;
+		int emptyJ = -1;
+		for (int j = 0; j < 3; j++) {
+			if (gameTable[row][j] == ch) {
+				res++;
+			} else if (gameTable[row][j] == EMPTY) {
+				emptyI = row;
+				emptyJ = j;
+			}
+		}
+		return handleTrySetResult(res, emptyI, emptyJ);
+	}
+
+	public static boolean trySetToCol(int col, char ch) {
+		int res = 0;
+		int emptyI = -1;
+		int emptyJ = -1;
+		for (int i = 0; i < 3; i++) {
+			if (gameTable[i][col] == ch) {
+				res++;
+			} else if (gameTable[i][col] == EMPTY) {
+				emptyI = i;
+				emptyJ = col;
+			}
+		}
+		return handleTrySetResult(res, emptyI, emptyJ);
+	}
+
+	public static boolean trySetToMainDiagonal(char ch) {
+		int res = 0;
+		int emptyI = -1;
+		int emptyJ = -1;
+		for (int i = 0; i < 3; i++) {
+			if (gameTable[i][i] == ch) {
+				res++;
+			} else if (gameTable[i][i] == EMPTY) {
+				emptyI = emptyJ = i;
+			}
+		}
+		return handleTrySetResult(res, emptyI, emptyJ);
+	}
+
+	public static boolean trySetToNotMainDiagonal(char ch) {
+		int res = 0;
+		int emptyI = -1;
+		int emptyJ = -1;
+		for (int i = 0; i < 3; i++) {
+			if (gameTable[i][3 - i - 1] == ch) {
+				res++;
+			} else if (gameTable[i][3 - i - 1] == EMPTY) {
+				emptyI = i;
+				emptyJ = 3 - i - 1;
+			}
+		}
+		return handleTrySetResult(res, emptyI, emptyJ);
+	}
+
+	public static boolean handleTrySetResult(int res, int emptyI, int emptyJ) {
+		if (res == 2 && emptyI != -1 && emptyJ != -1) {
+			gameTable[emptyI][emptyJ] = COMPUTER;
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	public static int[][] getVariants(int i, int j) {
+		if (i == 0) {
+			if (j == 0) {
+				return new int[][] { { 0, 1 }, { 1, 1 }, { 1, 0 } };
+			} else if (j == 1) {
+				return new int[][] { { 0, 2 }, { 1, 1 }, { 0, 0 } };
+			} else {
+				return new int[][] { { 1, 2 }, { 1, 1 }, { 0, 1 } };
+			}
+		} else if (i == 1) {
+			if (j == 0) {
+				return new int[][] { { 0, 0 }, { 1, 1 }, { 2, 0 } };
+			} else if (j == 1) {
+				return new int[][] { { 0, 1 }, { 0, 2 }, { 1, 2 }, { 2, 2 }, { 2, 1 }, { 2, 0 }, { 1, 0 }, { 0, 0 } };
+			} else {
+				return new int[][] { { 2, 2 }, { 1, 1 }, { 0, 2 } };
+			}
+		} else {
+			if (j == 0) {
+				return new int[][] { { 1, 0 }, { 1, 1 }, { 2, 1 } };
+			} else if (j == 1) {
+				return new int[][] { { 1, 1 }, { 2, 2 }, { 2, 0 } };
+			} else {
+				return new int[][] { { 1, 2 }, { 2, 1 }, { 1, 1 } };
+			}
+		}
+	}
+
+	public static boolean tryWinOnNextTurn() {
+		for (int i = 0; i < 3; i++) {
+			for (int j = 0; j < 3; j++) {
+				if (gameTable[i][j] == COMPUTER) {
+					int[][] variants = getVariants(i, j);
+					int rowIndex = new Random().nextInt(variants.length);
+					for (int k = 0; k < variants.length; k++) {
+						int number = variants[rowIndex][0] * 3 + variants[rowIndex][1] + 1;
+						if (isCellFree(number)) {
+							makeTurn(number, COMPUTER);
+							return true;
+						}
+						rowIndex++;
+						if (rowIndex >= variants.length) {
+							rowIndex = 0;
+						}
+					}
+				}
+			}
+		}
+		return false;
 	}
 }
