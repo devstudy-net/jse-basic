@@ -4,7 +4,6 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
-import java.awt.HeadlessException;
 import java.awt.Toolkit;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -21,17 +20,20 @@ import javax.swing.WindowConstants;
  * @author devstudy
  * @see http://devstudy.net
  */
-public class GUIGomoku extends JFrame {
-	private static final long serialVersionUID = 1714372457079337160L;
+public class GUIGomoku {
 	private JLabel cells[][] = new JLabel[Gomoku.SIZE][Gomoku.SIZE];
+	private JFrame jFrame;
 
-	public GUIGomoku() throws HeadlessException {
-		super("Gomoku");
+	public GUIGomoku() {
+		jFrame = new JFrame("Gomoku");
 		createGameUITable();
+		jFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+		jFrame.setResizable(false);
+		jFrame.pack();
 	}
 
-	public void createGameUITable() {
-		setLayout(new GridLayout(Gomoku.SIZE, Gomoku.SIZE));
+	private void createGameUITable() {
+		jFrame.setLayout(new GridLayout(Gomoku.SIZE, Gomoku.SIZE));
 		for (int i = 0; i < Gomoku.SIZE; i++) {
 			for (int j = 0; j < Gomoku.SIZE; j++) {
 				final int row = i;
@@ -44,7 +46,7 @@ public class GUIGomoku extends JFrame {
 				p.setFont(new Font(Font.SERIF, Font.PLAIN, 35));
 				p.setForeground(Color.BLACK);
 				p.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-				add(p);
+				jFrame.add(p);
 				p.addMouseListener(new MouseAdapter() {
 					@Override
 					public void mouseClicked(MouseEvent e) {
@@ -55,9 +57,16 @@ public class GUIGomoku extends JFrame {
 		}
 
 		Gomoku.init();
+		Gomoku.cells = cells;
+	}
+	
+	private void show(){
+		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
+		jFrame.setLocation(dim.width / 2 - jFrame.getSize().width / 2, dim.height / 2 - jFrame.getSize().height / 2);
+		jFrame.setVisible(true);
 	}
 
-	public void startNewGame() {
+	private void startNewGame() {
 		Gomoku.init();
 		for (int i = 0; i < Gomoku.SIZE; i++) {
 			for (int j = 0; j < Gomoku.SIZE; j++) {
@@ -68,7 +77,7 @@ public class GUIGomoku extends JFrame {
 		}
 	}
 
-	public void stopGame() {
+	private void stopGame() {
 		for (int i = 0; i < Gomoku.SIZE; i++) {
 			for (int j = 0; j < Gomoku.SIZE; j++) {
 				cells[i][j].removeMouseListener(cells[i][j].getMouseListeners()[0]);
@@ -76,37 +85,67 @@ public class GUIGomoku extends JFrame {
 		}
 	}
 
-	public void handleHumanTurn(int row, int col) {
+	private boolean isWinnerHuman() {
+		if (Gomoku.findWinner(Gomoku.HUMAN)) {
+			if (JOptionPane.showConfirmDialog(jFrame, "Game over: User win!\nNew game?") == JOptionPane.YES_OPTION) {
+				startNewGame();
+			} else {
+				stopGame();
+			}
+			return true;
+		}
+		return false;
+	}
+
+	private boolean isWinnerComputer() {
+		if (Gomoku.findWinner(Gomoku.COMPUTER)) {
+			if (JOptionPane.showConfirmDialog(jFrame, "Game over: Computer wins!\nNew game?") == JOptionPane.YES_OPTION) {
+				startNewGame();
+			} else {
+				stopGame();
+			}
+			return true;
+		}
+		return false;
+	}
+
+	private boolean isDraw() {
+		if (Gomoku.hasEmptyCells()) {
+			return false;
+		} else {
+			if (JOptionPane.showConfirmDialog(jFrame, "Game over: Draw!\nNew game?") == JOptionPane.YES_OPTION) {
+				startNewGame();
+			} else {
+				stopGame();
+			}
+			return true;
+		}
+	}
+
+	private void handleHumanTurn(int row, int col) {
 		if (Gomoku.isCellFree(row, col)) {
-			Gomoku.makeHumanTurn(row, col, cells);
-			Gomoku.makeComputerTurn(cells);
-			char ch = Gomoku.findWinner(cells);
-			if (ch == Gomoku.HUMAN) {
-				if (JOptionPane.showConfirmDialog(this, "Game over: User win!\nNew game?") == JOptionPane.YES_OPTION) {
-					startNewGame();
-				} else {
-					stopGame();
-				}
-			} else if (ch == Gomoku.COMPUTER) {
-				if (JOptionPane.showConfirmDialog(this, "Game over: Computer wins!\nNew game?") == JOptionPane.YES_OPTION) {
-					startNewGame();
-				} else {
-					stopGame();
-				}
+			Gomoku.makeHumanTurn(row, col);
+			if (isWinnerHuman()) {
+				return;
+			}
+			if (isDraw()) {
+				return;
+			}
+			Gomoku.makeComputerTurn();
+			if (isWinnerComputer()) {
+				return;
+			}
+			if (isDraw()) {
+				return;
 			}
 		} else {
-			JOptionPane.showMessageDialog(this, "Cell is not free! Click on free cell!");
+			JOptionPane.showMessageDialog(jFrame, "Cell is not free! Click on free cell!");
 		}
 	}
 
 	public static void main(String[] args) {
 		GUIGomoku w = new GUIGomoku();
-		w.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-		w.setResizable(false);
-		w.pack();
-		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
-		w.setLocation(dim.width / 2 - w.getSize().width / 2, dim.height / 2 - w.getSize().height / 2);
-		w.setVisible(true);
+		w.show();
 	}
 
 }
