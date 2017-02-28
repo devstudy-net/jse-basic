@@ -72,7 +72,7 @@ public class Gomoku {
 	}
 
 	public static void markWinningCombinationByRedColor() {
-		for (int k = 0; k < 5; k++) {
+		for (int k = 0; k < WIN_COUNT; k++) {
 			int row = winningCoordinates[k][0];
 			int col = winningCoordinates[k][1];
 			cells[row][col].setForeground(Color.RED);
@@ -104,7 +104,7 @@ public class Gomoku {
 					count++;
 				}
 			}
-			if(count == 5) {
+			if(count == WIN_COUNT) {
 				markWinningCombinationByRedColor();
 				return true;
 			}
